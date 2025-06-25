@@ -31,7 +31,18 @@ jobs:
         kubectl wait --for=condition=ready pod -l app=nodejs-app --timeout=60s
         kubectl get pods
 
+    - name: Show pod status and logs (on failure)
+      if: failure()
+      run: |
+        echo "Status of pods:"
+        kubectl get pods -o wide
+        echo "Describing pod:"
+        kubectl describe pod -l app=nodejs-app
+        echo "Logs of pod:"
+        kubectl logs -l app=nodejs-app
+
     - name: Test service URLs
+      if: success()
       run: |
         minikube service list
         minikube service nodejs-app --url
