@@ -5,25 +5,31 @@ on: [push]
 jobs:
   job1:
     runs-on: ubuntu-latest
-    name: build Node.js Docker Image and deploy to minikube
+    name: Build Node.js Docker Image and deploy to Minikube
     steps:
     - uses: actions/checkout@v2
 
-    - name: Start minikube
+    - name: Start Minikube
       uses: medyagh/setup-minikube@master
 
-    - name: Try the cluster !
+    - name: Verify Kubernetes cluster
       run: kubectl get pods -A
 
-    - name: Build image
+    - name: Build Docker image inside Minikube
       run: |
         export SHELL=/bin/bash
         eval $(minikube -p minikube docker-env)
-        docker build -f ./Dockerfile -t devopshint/node-app:latest .
+        docker build -f ./Dockerfile -t nodejs-app:latest .
         docker images
 
-    - name: Deploy to minikube
+    - name: Deploy to Minikube
       run: kubectl apply -f k8s-node-app.yaml
+
+    - name: Wait for pod to be ready
+      run: |
+        echo "Waiting for pod to be ready..."
+        kubectl wait --for=condition=ready pod -l app=nodejs-app --timeout=60s
+        kubectl get pods
 
     - name: Test service URLs
       run: |
